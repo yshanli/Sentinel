@@ -18,6 +18,7 @@ package com.alibaba.csp.sentinel.dashboard.repository.metric;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.csp.sentinel.util.TimeUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ import java.util.stream.Collectors;
 public class InMemoryMetricsRepository implements MetricsRepository<MetricEntity> {
 
     private static final long MAX_METRIC_LIVE_TIME_MS = 1000 * 60 * 5;
+    @Value("${sentinel.metric.livetime:300000}")
+    private long maxMetricLiveTimeMs = MAX_METRIC_LIVE_TIME_MS;
 
     /**
      * {@code app -> resource -> timestamp -> metric}
@@ -61,7 +64,7 @@ public class InMemoryMetricsRepository implements MetricsRepository<MetricEntity
                         @Override
                         protected boolean removeEldestEntry(Entry<Long, MetricEntity> eldest) {
                             // Metric older than {@link #MAX_METRIC_LIVE_TIME_MS} will be removed.
-                            return eldest.getKey() < TimeUtil.currentTimeMillis() - MAX_METRIC_LIVE_TIME_MS;
+                            return eldest.getKey() < TimeUtil.currentTimeMillis() - maxMetricLiveTimeMs;
                         }
                     }).put(entity.getTimestamp().getTime(), entity);
         } finally {
